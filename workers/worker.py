@@ -3,6 +3,7 @@ import threading
 import traceback
 from database import db_utils
 from database import tables
+import sys
 
 g_log_lock = threading.Lock()
 
@@ -18,6 +19,7 @@ class Worker(object):
         with g_log_lock:
             preamble = "[%s] (%s) " % (self.name, time.strftime("%H:%M:%S", time.gmtime()))
             print preamble + msg.replace("\n","\n" + (" " * len(preamble)))
+            sys.stdout.flush() # just in case
 
     def Ready(self):
         if self.frequency is None:
