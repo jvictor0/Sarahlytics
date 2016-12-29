@@ -27,7 +27,7 @@ class Channels:
                 q += ", "
         if videos:
             q += "videos_processed = now() "
-        q += "where channel_id in " + ",".join(["('%s')" % cid for cid in channel_ids])
+        q += "where channel_id in (%s)" % ",".join(["'%s'" % cid for cid in channel_ids])
         con.query(q)
 
     def ChannelsToProcess(self, con, channel, videos, limit):
@@ -50,7 +50,15 @@ class Channels:
 class ChannelsFacts(json_table.JSONTable):
     def __init__(self):
         super(ChannelsFacts, self).__init__("channels_facts",
-                                            [json_table.JSONColumn("channel_id", "blob", False, ["id"])],
+                                            [json_table.JSONColumn("channel_id", "blob", False, ["id"]),
+                                             json_table.JSONColumn("channel_title", "blob", False, ["snippet", "title"]),
+                                             json_table.JSONColumn("country", "blob", True, ["snippet", "country"]),
+                                             json_table.JSONColumn("etag", "blob", True, ["etag"]),                                            
+                                             json_table.JSONColumn("view_count", "bigint", False, ["statistics", "viewCount"]),
+                                             json_table.JSONColumn("comment_count", "bigint", False, ["statistics", "commentCount"]),
+                                             json_table.JSONColumn("video_count", "bigint", False, ["statistics", "videoCount"]),
+                                             json_table.JSONColumn("subscriber_count", "bigint", False, ["statistics", "subscriberCount"]),
+                                             json_table.JSONColumn("created", "datetime", False, ["snippet", "publishedAt"])],
                                             ["channel_id","ts"],
                                             ["channel_id"])
                                              
@@ -58,8 +66,19 @@ class VideosFacts(json_table.JSONTable):
     def __init__(self):
         super(VideosFacts, self).__init__("videos_facts",
                                           [json_table.JSONColumn("channel_id", "blob", False, ["channelId"]),
+                                           json_table.JSONColumn("channel_title", "blob", True, ["snippet", "channelTitle"]),
                                            json_table.JSONColumn("video_id", "blob", False, ["id"]),
-                                           json_table.JSONColumn("published_at", "datetime", False, ["publishedAt"])],
+                                           json_table.JSONColumn("video_title", "blob", True, ["snippet", "title"]),
+                                           json_table.JSONColumn("category_id", "blob", True, ["snippet", "categoryId"]),
+                                           json_table.JSONColumn("default_audio_language", "blob", True, ["snippet", "defaultAudioLanguage"]),
+                                           json_table.JSONColumn("default_language", "bigint", True, ["snippet", "defaultLanguage"]),
+                                           json_table.JSONColumn("etag", "blob", True, ["etag"]),
+                                           json_table.JSONColumn("published_at", "datetime", False, ["publishedAt"]),
+                                           json_table.JSONColumn("view_count", "bigint", True, ["statistics", "viewCount"]),
+                                           json_table.JSONColumn("like_count", "bigint", True, ["statistics", "likeCount"]),
+                                           json_table.JSONColumn("dislike_count", "bigint", True, ["statistics", "dislikeCount"]),
+                                           json_table.JSONColumn("favorite_count", "bigint", True, ["statistics", "favoriteCount"]),
+                                           json_table.JSONColumn("comment_count", "bigint", True, ["statistics", "commentCount"])],
                                           ["channel_id","video_id","ts"],
                                           ["channel_id"])
 

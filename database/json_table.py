@@ -99,6 +99,8 @@ class NormalizedArrayTable:
         
     def Values(self, json, now, values, remove=True):
         arr = ExtractPath(json, self.path, remove=remove)
+        if arr is None:
+            arr = []
         for a in arr:
             values.append([])
             for k in self.parent.kucc:

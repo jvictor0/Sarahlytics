@@ -13,7 +13,6 @@ class DatabaseInitWorker(worker.Worker):
     def DoWorkInternal(self):
         self.tables.Create(self.con)
 
-
 class PrepopulateWorker(worker.Worker):
     def __init__(self):
         super(PrepopulateWorker, self).__init__()

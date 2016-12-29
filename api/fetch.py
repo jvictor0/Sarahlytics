@@ -2,8 +2,17 @@ import api
 from database import db_utils
 
 video_kill_paths = [
+    ["kind"],
+    ["snippet","publishedAt"],
+    ["snippet","channelId"],
     ["snippet","localized"],
     ["snippet","thumbnails"],
+    ["snippet","description"]]
+
+channel_kill_paths = [
+    ["kind"],
+    ["snippet","thumbnails"],
+    ["snippet","localized"],
     ["snippet","description"]]
 
 def KillPath(kill_path, json):
@@ -17,6 +26,11 @@ def NormalizeVideo(json, channelId, publishedAt):
     json["channelId"] = channelId
     json["publishedAt"] = publishedAt
     for kp in video_kill_paths:
+        KillPath(kp, json)
+    return json
+
+def NormalizeChannel(json):
+    for kp in channel_kill_paths:
         KillPath(kp, json)
     return json
 
@@ -49,3 +63,6 @@ def ObserveVideos(video_rows, statistics=True, snippet=True):
         previds[vr["video_id"]] = vr
     return FetchVideos(previds, statistics, snippet)
                      
+def ObserveChannels(channels, statistics=True, snippet=True, content_details=True):
+    result = api.Channels(cids=channels, statistics=statistics, snippet=snippet, content_details=content_details)
+    return [NormalizeChannel(c) for c in result]

@@ -9,8 +9,12 @@ def WorkerFactory(name):
         return init_db.PrepopulateWorker()
     elif name == "video_observe":
         return ingest_workers.VideoObserverWorker()
+    elif name == "channel_observe":
+        return ingest_workers.ChannelObserverWorker()
     elif name == "video_gather":
         return ingest_workers.VideoGatherWorker()
+    elif name == "search":
+        return ingest_workers.SearchWorker()
     else:
         assert False, name
 
