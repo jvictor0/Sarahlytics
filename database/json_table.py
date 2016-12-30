@@ -117,10 +117,12 @@ class NormalizedArrayTable:
         if len(jsons) == 0:
             return
         if now is None:
-            now  = db_utils.Now(con)
+            now = db_utils.Now(con)
         values = []
         for j in jsons:
             self.Values(j, now, values)
+        if len(values) == 0:
+            return
         q = db_utils.InsertQuery(self.Name(), self.ColumnNames(), values)
         con.query(q)
 
