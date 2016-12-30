@@ -21,12 +21,13 @@ class Channels:
 
     def Process(self, con, channel_ids, channel, videos):
         q = "update channels set "
+        now = db_utils.Now(con)
         if channel:
-            q += "channel_processed = now() "
+            q += "channel_processed = '%s' " % now
             if videos:
                 q += ", "
         if videos:
-            q += "videos_processed = now() "
+            q += "videos_processed = '%s' " % now
         q += "where channel_id in (%s)" % ",".join(["'%s'" % cid for cid in channel_ids])
         con.query(q)
 
@@ -110,17 +111,25 @@ class VideosFacts(json_table.JSONTable):
         return {r["channel_id"] : db_utils.DateTime(r["most_recent_date"]) for r in con.query(self.MostRecentChannelVideo(cids=cids))}
 
     def GetVideosToObserve(self, con, limit):
+        now = db_utils.Now(con)
         # Want to obeserve videos exponentially less as we got on.
         # Specifically, The time between observations should be 2^(num_days) hours
         #
+        
+        two_days = "pow(2, timestampdiff(minute, published_at, '%s') / (60 * 24))" % now
+        hours_since = "(timestampdiff(minute, ts, '%s') / 60)" % now
+        
         q = """
-        select channel_id, video_id, published_at, ts, pow(2, timestampdiff(minute, published_at, now()) / (60 * 24)) as 2_days, timestampdiff(minute, ts, now()) / 60 as hours_since
-        from (%s) videos_most_recent
-        where pow(2, timestampdiff(minute, published_at, now()) / (60 * 24)) < timestampdiff(minute, ts, now()) / 60
+        select channel_id, video_id, published_at, ts, %(two_days)s as two_days, %(hours_since)s as hours_since
+        from (%(most_recent_videos)s) videos_most_recent
+        where %(two_days)s / 4  < %(hours_since)s
         order by published_at desc
-        limit %d
+        limit %(limit)d
         """
-        return con.query(q % (self.VideosMostRecent(), limit))
+        return con.query(q % {"most_recent_videos" : self.VideosMostRecent(),
+                              "limit" : limit,
+                              "two_days" : two_days,
+                              "hours_since" : hours_since})
 
                                              
 class Tables:

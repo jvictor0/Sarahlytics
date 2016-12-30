@@ -10,7 +10,7 @@ def Connect(use_db=True):
     return con
 
 def Now(con):
-    return con.query("select now() n")[0]["n"]
+    return con.query("select convert_tz(now(), 'SYSTEM', 'GMT') n")[0]["n"]
 
 def Value(v):
     if v is None:
