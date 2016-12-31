@@ -176,3 +176,8 @@ class JSONTable(object):
         con.query(self.ToSQL())
         for nat in self.normalized_array_tables:
             nat.Create(con)
+
+    def MostRecent(self):
+        assert self.kucc[-1] == "ts"
+        window = "rank() over (partition by %s order by ts)" % ",".join(self.kucc[:-1])
+        return "select * from (select *, %s r from %s) sub where r = 1" % (window, self.name)
