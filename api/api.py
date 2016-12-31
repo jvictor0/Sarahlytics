@@ -124,6 +124,9 @@ def Channels(cids=[], quota=[0], statistics=True, snippet=True, content_details=
 def VideosCost(len_vids, statistics=True, snippet=True):
     return (1 + 2 * sum([statistics, snippet])) * ((len_vids + 49) / 50)    
 
+def VideosForCost(cost, statistics=True, snippet=True):
+    return 50 * cost / (1 + 2 * sum([statistics, snippet]))
+
 def Videos(vids=[], quota=[0], statistics=True, snippet=True):
     if len(vids) == 0:
         return []

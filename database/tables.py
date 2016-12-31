@@ -116,7 +116,7 @@ class VideosFacts(json_table.JSONTable):
         # Specifically, The time between observations should be 2^(num_days) hours
         #
         
-        two_days = "pow(2, timestampdiff(minute, published_at, '%s') / (60 * 24))" % now
+        two_days = "pow(1.5, timestampdiff(minute, published_at, '%s') / (60 * 24))" % now
         hours_since = "(timestampdiff(minute, ts, '%s') / 60)" % now
         
         q = """
