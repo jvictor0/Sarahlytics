@@ -116,13 +116,13 @@ class VideosFacts(json_table.JSONTable):
         # Specifically, The time between observations should be 2^(num_days) hours
         #
         
-        two_days = "pow(1.5, timestampdiff(minute, published_at, '%s') / (60 * 24))" % now
+        two_days = "pow(1.75, timestampdiff(minute, published_at, '%s') / (60 * 24))" % now
         hours_since = "(timestampdiff(minute, ts, '%s') / 60)" % now
         
         q = """
         select channel_id, video_id, published_at, ts, %(two_days)s as two_days, %(hours_since)s as hours_since
         from (%(most_recent_videos)s) videos_most_recent
-        where %(two_days)s / 4  < %(hours_since)s
+        where %(two_days)s < %(hours_since)s
         order by published_at desc
         limit %(limit)d
         """
