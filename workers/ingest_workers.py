@@ -7,7 +7,7 @@ from api import api
 import random
 
 class VideoObserverWorker(worker.Worker):
-    def __init__(self, frequency=60*5, max_daily_quota=10000):
+    def __init__(self, frequency=60*5, max_daily_quota=100000):
         super(VideoObserverWorker, self).__init__(frequency=frequency)
         self.max_quota_per_work = max_daily_quota / (60 * 60 * 24 / frequency)
 
@@ -18,7 +18,7 @@ class VideoObserverWorker(worker.Worker):
         self.Log("found %d to observe, observed %d videos" % (len(vid_rows), len(observations)))
 
 class VideoGatherWorker(worker.Worker):
-    def __init__(self, frequency=60*5, max_daily_quota=30000):
+    def __init__(self, frequency=60*5, max_daily_quota=300000):
         super(VideoGatherWorker, self).__init__(frequency=frequency)
         self.max_quota_per_work = max_daily_quota / (60 * 60 * 24 / frequency)
 
