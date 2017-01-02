@@ -20,6 +20,8 @@ class Channels:
         con.query("insert ignore into channels(channel_id) values" + ",".join(["('%s')" % cid for cid in channel_ids]))
 
     def Process(self, con, channel_ids, channel, videos):
+        if len(channel_ids) == 0:
+            return
         q = "update channels set "
         now = db_utils.Now(con)
         if channel:
