@@ -28,12 +28,12 @@ class Worker(object):
             return time.time() > self.last + self.frequency
 
     def DoWork(self):
-        self.last = time.time()
         try:
             self.DoWorkInternal()
         except Exception:
             self.Log(traceback.format_exc())
             raise
+        self.last = time.time()
     
     def DoWorkInternal(self):
         assert False, "override me"
