@@ -52,16 +52,18 @@ class ChannelsFacts(json_table.JSONTable):
     def __init__(self):
         super(ChannelsFacts, self).__init__("channels_facts",
                                             [json_table.JSONColumn("channel_id", "blob", False, ["id"]),
-                                             json_table.JSONColumn("channel_title", "blob", False, ["snippet", "title"]),
+                                             json_table.JSONColumn("channel_title", "blob", True, ["snippet", "title"]),
                                              json_table.JSONColumn("country", "blob", True, ["snippet", "country"]),
                                              json_table.JSONColumn("etag", "blob", True, ["etag"]),                                            
-                                             json_table.JSONColumn("view_count", "bigint", False, ["statistics", "viewCount"]),
-                                             json_table.JSONColumn("comment_count", "bigint", False, ["statistics", "commentCount"]),
-                                             json_table.JSONColumn("video_count", "bigint", False, ["statistics", "videoCount"]),
-                                             json_table.JSONColumn("subscriber_count", "bigint", False, ["statistics", "subscriberCount"]),
-                                             json_table.JSONColumn("created", "datetime", False, ["snippet", "publishedAt"])],
+                                             json_table.JSONColumn("view_count", "bigint", True, ["statistics", "viewCount"]),
+                                             json_table.JSONColumn("comment_count", "bigint", True, ["statistics", "commentCount"]),
+                                             json_table.JSONColumn("video_count", "bigint", True, ["statistics", "videoCount"]),
+                                             json_table.JSONColumn("subscriber_count", "bigint", True, ["statistics", "subscriberCount"]),
+                                             json_table.JSONColumn("created", "datetime", True, ["snippet", "publishedAt"]),
+                                             json_table.JSONColumn("f", "tinyint", False, ["f"])],
                                             ["channel_id","ts"],
                                             ["channel_id"])
+
                                              
 class VideosFacts(json_table.JSONTable):
     def __init__(self):
@@ -79,12 +81,13 @@ class VideosFacts(json_table.JSONTable):
                                            json_table.JSONColumn("like_count", "bigint", True, ["statistics", "likeCount"]),
                                            json_table.JSONColumn("dislike_count", "bigint", True, ["statistics", "dislikeCount"]),
                                            json_table.JSONColumn("favorite_count", "bigint", True, ["statistics", "favoriteCount"]),
-                                           json_table.JSONColumn("comment_count", "bigint", True, ["statistics", "commentCount"])],
+                                           json_table.JSONColumn("comment_count", "bigint", True, ["statistics", "commentCount"]),
+                                           json_table.JSONColumn("f", "tinyint", False, ["f"])],
                                           ["channel_id","video_id","ts"],
                                           ["channel_id"])
 
         json_table.NormalizedArrayTable("tag", "blob", True, self, ["snippet","tags"], ["channel_id","video_id","tag","ts"])
-
+        
     def VideosMostRecent(self):
         return """
         select channel_id, video_id, max(published_at) as published_at, max(ts) as ts

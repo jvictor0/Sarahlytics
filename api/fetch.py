@@ -16,6 +16,7 @@ channel_kill_paths = [
     ["snippet","description"]]
 
 def KillPath(kill_path, json):
+    json["f"] = 1
     if kill_path[0] in json:
         if len(kill_path) == 1:
             del json[kill_path[0]]
@@ -25,9 +26,20 @@ def KillPath(kill_path, json):
 def NormalizeVideo(json, channelId, publishedAt):
     json["channelId"] = channelId
     json["publishedAt"] = publishedAt
+    json["f"] = 1
     for kp in video_kill_paths:
         KillPath(kp, json)
     return json
+
+def EmptyVideo(channel_id, video_id, published_at):
+    return {"channelId" : channel_id,
+            "id" : video_id,
+            "publishedAt" : published_at,
+            "f" : 0}
+
+def EmptyChannel(channel_id):
+    return {"id" :channel_id,
+            "f" : 0}        
 
 def NormalizeChannel(json):
     for kp in channel_kill_paths:
@@ -63,7 +75,13 @@ def ObserveVideos(video_rows, statistics=True, snippet=True):
     previds = {}
     for vr in video_rows:
         previds[vr["video_id"]] = vr
-    return FetchVideos(previds, statistics, snippet)
+    result = FetchVideos(previds, statistics, snippet)
+    the_videos = set([r["id"] for r in result])
+    for vid, pv in previds.iteritems():
+        if vid not in the_videos:
+            result.append(EmptyVideo(pv["channel_id"], pv["video_id"], pv["published_at"]))
+    assert len(result) == len(previds), (result, previds)
+    return result
                      
 def ObserveChannels(channels, statistics=True, snippet=True, content_details=True):
     result = api.Channels(cids=channels, statistics=statistics, snippet=snippet, content_details=content_details)
