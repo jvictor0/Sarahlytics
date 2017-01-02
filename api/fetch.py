@@ -60,9 +60,10 @@ def FetchVideos(previds, statistics=True, snippet=True):
     return result
 
         
-def FetchVideosForChannels(channel_ids, stop_before={}, max_quota=None, max_pages_per_channel=None, statistics=True, snippet=True):
+def FetchVideosForChannels(channel_ids, stop_before={}, max_quota=None, quota=None, max_pages_per_channel=None, statistics=True, snippet=True):
+    if quota is None:
+        quota = [0]
     previds = {}
-    quota = [0]
     channels = api.Channels(cids=channel_ids, quota=quota, statistics=False)
     found_channels = set([c["id"] for c in channels])
     the_channels = []    
