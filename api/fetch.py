@@ -52,14 +52,24 @@ def FetchVideos(previds, statistics=True, snippet=True):
     for v in videos:
         pv = previds[v['id']]
         result.append(NormalizeVideo(v, pv["channel_id"], pv["published_at"]))
-    return result    
+    the_videos = set([r["id"] for r in result])
+    for vid, pv in previds.iteritems():
+        if vid not in the_videos:
+            result.append(EmptyVideo(pv["channel_id"], pv["video_id"], pv["published_at"]))
+    assert len(result) == len(previds), (result, previds)
+    return result
+
         
 def FetchVideosForChannels(channel_ids, stop_before={}, max_quota=None, max_pages_per_channel=None, statistics=True, snippet=True):
     previds = {}
     quota = [0]
     channels = api.Channels(cids=channel_ids, quota=quota, statistics=False)
+    found_channels = set([c["id"] for c in channels])
+    the_channels = []    
+    for c in channel_ids:
+        if c not in found_channels:
+            the_channels.append(c)
     uploads = [(pv["id"], pv["contentDetails"]["relatedPlaylists"]["uploads"]) for pv in channels]
-    the_channels = []
     for cid, u in uploads:
         if max_quota is not None:
             if quota[0] + api.VideosCost(len(previds), statistics=statistics, snippet=snippet) > max_quota:
@@ -75,14 +85,14 @@ def ObserveVideos(video_rows, statistics=True, snippet=True):
     previds = {}
     for vr in video_rows:
         previds[vr["video_id"]] = vr
-    result = FetchVideos(previds, statistics, snippet)
-    the_videos = set([r["id"] for r in result])
-    for vid, pv in previds.iteritems():
-        if vid not in the_videos:
-            result.append(EmptyVideo(pv["channel_id"], pv["video_id"], pv["published_at"]))
-    assert len(result) == len(previds), (result, previds)
-    return result
+    return FetchVideos(previds, statistics, snippet)
                      
 def ObserveChannels(channels, statistics=True, snippet=True, content_details=True):
     result = api.Channels(cids=channels, statistics=statistics, snippet=snippet, content_details=content_details)
-    return [NormalizeChannel(c) for c in result]
+    result = [NormalizeChannel(c) for c in result]
+    the_channels = set([r["id"] for r in result])
+    for c in channels:
+        if c not in the_channels:
+            result.append(EmptyChannel(c))
+    assert len(result) == len(channels)
+    return result
