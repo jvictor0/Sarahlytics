@@ -20,7 +20,7 @@ class Enumerizer:
         return len(self.keys)
 
     def Dense(self, dct):        
-        result = numpy.array([0 for _ in xrange(len(self))])
+        result = numpy.array([0 for _ in xrange(len(self))], dtype=numpy.double)
         for k,v in dct.iteritems():
             result[self.GetEnum(k, no_insert=True)] = v
         return result
@@ -35,7 +35,7 @@ class SparseMatrixBuilder:
         self.entries.append((self.row_enum.GetEnum(row), self.col_enum.GetEnum(col), val))
 
     def LIL(self):
-        result = sparse.lil_matrix((len(self.row_enum), len(self.col_enum)))
+        result = sparse.lil_matrix((len(self.row_enum), len(self.col_enum)), dtype=numpy.double)
         for i,j,v in self.entries:
             result[i,j] = v
         return result

@@ -9,7 +9,7 @@ def TagMatrix(tags):
     for t in tags:
         mat.Insert(t["video_id"], t["tag"], 1)
         if t["video_id"] not in response_dict:
-            response_dict[t["video_id"]] = t["response"]
+            response_dict[t["video_id"]] = float(t["response"])
     return mat, mat.DenseRowVec(response_dict)
 
 def ViewsOverSubsTags(earliest, latest, observed_at_secs=7*24*60*60, observed_at_bounds_secs=24*60*60):
@@ -28,7 +28,7 @@ def ViewsOverSubsTagMatrix(con, earliest, latest, observed_at_secs=7*24*60*60, o
     tags = con.query(ViewsOverSubsTags(earliest, latest, observed_at_secs, observed_at_bounds_secs))
     return TagMatrix(tags)
 
-def ViewsOverSubsTagLasso(con, earliest, latest, observed_at_secs=7*24*60*60, observed_at_bounds_secs=24*60*60):
+def ViewsOverSubsTagLasso(con, earliest, latest, observed_at_secs=7*24*60*60, observed_at_bounds_secs=24*60*60, alpha=1.0):
     mat_builder, vec = ViewsOverSubsTagMatrix(con, earliest, latest, observed_at_secs, observed_at_bounds_secs)
-    return lasso.Lasso(mat_builder, vec)
+    return lasso.Lasso(mat_builder, vec, alpha=alpha)
 

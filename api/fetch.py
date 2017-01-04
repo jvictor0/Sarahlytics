@@ -16,7 +16,6 @@ channel_kill_paths = [
     ["snippet","description"]]
 
 def KillPath(kill_path, json):
-    json["f"] = 1
     if kill_path[0] in json:
         if len(kill_path) == 1:
             del json[kill_path[0]]
@@ -42,6 +41,7 @@ def EmptyChannel(channel_id):
             "f" : 0}        
 
 def NormalizeChannel(json):
+    json["f"] = 1
     for kp in channel_kill_paths:
         KillPath(kp, json)
     return json
