@@ -57,7 +57,7 @@ class ChannelsFacts(json_table.JSONTable):
                                              json_table.JSONColumn("channel_title", "blob", True, ["snippet", "title"]),
                                              json_table.JSONColumn("country", "blob", True, ["snippet", "country"]),
                                              json_table.JSONColumn("etag", "blob", True, ["etag"]),                                            
-                                             json_table.JSONColumn("view_count", "bigint", True, ["statistics", "viewCount"]),
+                                             json_table.JSONColumn("channel_view_count", "bigint", True, ["statistics", "viewCount"]),
                                              json_table.JSONColumn("comment_count", "bigint", True, ["statistics", "commentCount"]),
                                              json_table.JSONColumn("video_count", "bigint", True, ["statistics", "videoCount"]),
                                              json_table.JSONColumn("subscriber_count", "bigint", True, ["statistics", "subscriberCount"]),
