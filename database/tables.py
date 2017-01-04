@@ -164,7 +164,7 @@ class Tables:
         self.channels_facts.Create(con)
         self.videos_facts.Create(con)
 
-    def Joined(self, channels_facts='base', videos_facts='base', videos_facts_tags=None, closest_temporal=True):
+    def Joined(self, channels_facts='base', videos_facts='base', videos_facts_tags='base', closest_temporal=True):
         result = "select\n    "
         cols = []
         joins = []
@@ -186,6 +186,8 @@ class Tables:
                     continue
                 cols.append("videos_facts.%s" % c.name)
         if videos_facts_tags is not None:
+            if closest_temporal:
+                cols.append("rank() over (partition by videos_facts.channel_id, videos_facts.video_id order by abs(timestampdiff(second, videos_facts_tags.ts, videos_facts.ts))) as video_tag_time_rank")
             assert videos_facts is not None
             joins.append("videos_facts_tags.channel_id = videos_facts.channel_id")
             joins.append("videos_facts_tags.video_id = videos_facts.video_id")
@@ -216,11 +218,16 @@ class Tables:
         result += "on " + " and ".join(joins)
 
         if closest_temporal:
+            preds = []
+            if channels_facts is not None:
+                preds.append("channel_video_time_rank = 1")
+            if videos_facts_tags is not None:
+                preds.append("video_tag_time_rank = 1")                
             true_result = db_utils.Dedent("""
             select * from
             (%s) sub
-            where channel_video_time_rank = 1
+            where %s            
             """)
-            return true_result % db_utils.Indent(result)
+            return true_result % (db_utils.Indent(result), " and ".join(preds))
         else:
             return result
