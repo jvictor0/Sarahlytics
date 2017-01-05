@@ -128,7 +128,7 @@ class NormalizedArrayTable:
 
     def MostRecent(self):
         assert self.parent.kucc[-1] == "ts"
-        window = "rank() over (partition by %s order by ts)" % ",".join(self.parent.kucc[:-1] + [self.name])
+        window = "rank() over (partition by %s order by ts desc)" % ",".join(self.parent.kucc[:-1] + [self.name])
         return "select * from (select *, %s r from %s) sub where r = 1" % (window, self.Name())        
 
 class JSONTable(object):
