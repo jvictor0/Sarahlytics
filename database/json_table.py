@@ -184,5 +184,5 @@ class JSONTable(object):
 
     def MostRecent(self):
         assert self.kucc[-1] == "ts"
-        window = "rank() over (partition by %s order by ts)" % ",".join(self.kucc[:-1])
+        window = "rank() over (partition by %s order by ts desc)" % ",".join(self.kucc[:-1])
         return "select * from (select *, %s r from %s) sub where r = 1" % (window, self.name)
