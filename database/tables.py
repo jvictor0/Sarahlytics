@@ -1,5 +1,6 @@
 import json_table
 import db_utils
+import temporal_band
 
 class Channels:
     def __init__(self):
@@ -89,22 +90,8 @@ class VideosFacts(json_table.JSONTable):
 
         self.tags = json_table.NormalizedArrayTable("tag", "blob", True, self, ["snippet","tags"], ["channel_id","video_id","tag","ts"])
 
-    def TemporalBand(self, earliest, latest, observed_at_secs=7*24*60*60, observed_at_bounds_secs=24*60*60):
-        observed_diff = "abs(timestampdiff(second, published_at, ts) - %d)" % observed_at_secs
-        q = db_utils.Dedent("""
-        select * from 
-        (
-            select *, rank() over (partition by channel_id, video_id order by %(observed_diff)s) as r
-            from videos_facts
-            where %(observed_diff)s < %(observed_at_bounds_secs)s
-                  and published_at between '%(earliest)s' and '%(latest)s'
-        ) sub
-        where r = 1
-        """)
-        return q % {"earliest":earliest,
-                    "latest" :latest,
-                    "observed_at_bounds_secs":observed_at_bounds_secs,
-                    "observed_diff":observed_diff}
+    def TemporalBand(self, **kwargs):
+        return temporal_band.TemporalBand(video_name="videos_facts", **kwargs).Query()
         
     def VideosMostRecent(self):
         return """

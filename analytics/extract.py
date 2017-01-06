@@ -2,6 +2,9 @@ import sparse_matrix
 import lasso
 from database import tables
 from database import db_utils
+from database import temporal_band
+import argparse
+import simplejson
 
 def TagMatrix(tags):
     mat = sparse_matrix.SparseMatrixBuilder()
@@ -12,23 +15,37 @@ def TagMatrix(tags):
             response_dict[t["video_id"]] = float(t["response"])
     return mat, mat.DenseRowVec(response_dict)
 
-def ViewsOverSubsTags(earliest, latest, observed_at_secs=7*24*60*60, observed_at_bounds_secs=24*60*60):
-    tabs = tables.Tables()
-    videos = tabs.videos_facts.TemporalBand(earliest, latest, observed_at_secs, observed_at_bounds_secs)
-    join = tabs.Joined(videos_facts=videos)
-    query = """
-    select video_id, tag, view_count / subscriber_count as response
-    from 
-    (%s) sub
-    where view_count > 0 and subscriber_count > 0 and videos_facts_f and channels_facts_f
-    """
-    return db_utils.Dedent(query) % db_utils.Indent(join)
+class ViewsOverSubsTags:
+    def __init__(self, temp_band, min_subs=None):
+        self.temp_band = temp_band
+        self.min_subs = min_subs
+        
+    def Query(self):
+        tabs = tables.Tables()
+        join = tabs.Joined(videos_facts=self.temp_band.Query())
+        preds = ["view_count > 0", "subscriber_count > %d" % (0 if self.min_subs is None else self.min_subs), "videos_facts_f", "channels_facts_f"]
+        query = """
+        select video_id, tag, view_count / subscriber_count as response
+        from 
+        (%s) sub
+        where %s
+        """
+        return db_utils.Dedent(query) % (db_utils.Indent(join), " and ".join(preds))
     
-def ViewsOverSubsTagMatrix(con, earliest, latest, observed_at_secs=7*24*60*60, observed_at_bounds_secs=24*60*60):
-    tags = con.query(ViewsOverSubsTags(earliest, latest, observed_at_secs, observed_at_bounds_secs))
-    return TagMatrix(tags)
+    def Matrix(self, con):
+        tags = con.query(self.Query())
+        return TagMatrix(tags)
 
-def ViewsOverSubsTagLasso(con, earliest, latest, observed_at_secs=7*24*60*60, observed_at_bounds_secs=24*60*60, alpha=1.0):
-    mat_builder, vec = ViewsOverSubsTagMatrix(con, earliest, latest, observed_at_secs, observed_at_bounds_secs)
-    return lasso.Lasso(mat_builder, vec, alpha=alpha)
+    def Lasso(self, con, remove_zeros=True, alpha=1.0):
+        mat_builder, vec = self.Matrix(con)
+        return lasso.Lasso(mat_builder, vec, alpha=alpha, remove_zeros=remove_zeros)
 
+
+if __name__ == "__main__":
+    con = db_utils.Connect()
+    temp_band = temporal_band.TemporalBand(con=con,
+                                           earliest_ago=5*24*60*60,
+                                           latest_ago=4*24*60*60,
+                                           observed_at_secs=3*24*60*60)
+    views_over_subs = ViewsOverSubsTags(temp_band=temp_band, min_subs=200)
+    print simplejson.dumps(views_over_subs.Lasso(con), indent=4)
