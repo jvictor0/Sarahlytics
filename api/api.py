@@ -1,8 +1,9 @@
 import config
-from apiclient.discovery import build
-from apiclient.errors import HttpError
-from oauth2client.tools import argparser
+import apiclient.discovery
+import apiclient.errors
 from database import db_utils
+import time
+import traceback
 
 # Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
 # tab of
@@ -16,8 +17,20 @@ g_youtube = None
 def YouTube():
     global g_youtube
     if g_youtube is None:
-        g_youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=config.DEVELOPER_KEY)
+        g_youtube = apiclient.discovery.build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=config.DEVELOPER_KEY)
     return g_youtube
+
+def ApiRequestRetry(fn, num_retries=10, sleep_secs=30, **kwargs):
+    for i in xrange(num_retries):
+        try:
+            return fn(**kwargs).execute()
+        except apiclient.errors.HttpError as e:
+            traceback.print_exc()
+            if e.resp.status in [500, 503]:
+                time.sleep(sleep_secs)
+            else:
+                raise
+    raise e
 
 def SearchInternal(quota=[0], q=None, snippet=True, max_results=50, channel_id=None, search_type="video", order="date", page_token=None, published_before=None, published_after=None):
     youtube = YouTube()
@@ -29,17 +42,16 @@ def SearchInternal(quota=[0], q=None, snippet=True, max_results=50, channel_id=N
         part.append("snippet")
     part = ",".join(part)
     
-    search_response = youtube.search().list(
-        q=q,
-        part=part,
-        maxResults=max_results,
-        type=search_type,
-        order=order,
-        channelId=channel_id,
-        pageToken=page_token,
-        publishedBefore=published_before,
-        publishedAfter=published_after
-    ).execute()
+    search_response = ApiRequestRetry(youtube.search().list,
+                                      q=q,
+                                      part=part,
+                                      maxResults=max_results,
+                                      type=search_type,
+                                      order=order,
+                                      channelId=channel_id,
+                                      pageToken=page_token,
+                                      publishedBefore=published_before,
+                                      publishedAfter=published_after)
 
     return search_response
 
@@ -54,12 +66,12 @@ def PlaylistItemsInternal(quota=[0], snippet=True, max_results=50, playlist_id=N
         part.append("snippet")
     part = ",".join(part)
     
-    search_response = youtube.playlistItems().list(
-        part=part,
-        maxResults=max_results,
-        playlistId=playlist_id,
-        pageToken=page_token,
-    ).execute()
+    search_response = ApiRequestRetry(youtube.playlistItems().list,
+                                      part=part,
+                                      maxResults=max_results,
+                                      playlistId=playlist_id,
+                                      pageToken=page_token,
+    )
 
     return search_response
 
@@ -113,9 +125,9 @@ def Channels(cids=[], quota=[0], statistics=True, snippet=True, content_details=
         quota[0] += this_quota
         the_cids = ",".join(cids[i:i+50])
 
-        search_response = youtube.channels().list(
-            part=part,
-            id=the_cids).execute()
+        search_response = ApiRequestRetry(youtube.channels().list,
+                                          part=part,
+                                          id=the_cids)
 
         result.extend(search_response.get("items", []))
 
@@ -148,9 +160,9 @@ def Videos(vids=[], quota=[0], statistics=True, snippet=True):
         quota[0] += this_quota        
         the_vids = ",".join(vids[i:i+50])
 
-        search_response = youtube.videos().list(
-            part=part,
-            id=the_vids).execute()
+        search_response = ApiRequestRetry(youtube.videos().list,
+                                          part=part,
+                                          id=the_vids)
 
         result.extend(search_response.get("items", []))
 
