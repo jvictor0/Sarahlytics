@@ -123,20 +123,22 @@ class VideosFacts(json_table.JSONTable):
         # Want to obeserve videos exponentially less as we got on.
         # Specifically, The time between observations should be 2^(num_days) hours
         #
-        
-        two_days = "pow(1.75, timestampdiff(minute, published_at, '%s') / (60 * 24))" % now
+
+        time_since_published = "timestampdiff(minute, published_at, '%s')" % now
+        two_days = "pow(1.75, %s / (60 * 24))" % time_since_published
+        hours_limit = "least(%s / 4, %s)" % (time_since_published, two_days)
         hours_since = "(timestampdiff(minute, ts, '%s') / 60)" % now
         
         q = """
-        select channel_id, video_id, published_at, ts, %(two_days)s as two_days, %(hours_since)s as hours_since
+        select channel_id, video_id, published_at, ts, %(hours_limit)s as two_days, %(hours_since)s as hours_since
         from (%(most_recent_videos)s) videos_most_recent
-        where %(two_days)s < %(hours_since)s
+        where %(hours_limit)s < %(hours_since)s
         order by published_at desc
         limit %(limit)d
         """
         return con.query(q % {"most_recent_videos" : self.VideosMostRecent(),
                               "limit" : limit,
-                              "two_days" : two_days,
+                              "hours_limit" : hours_limit,
                               "hours_since" : hours_since})
 
                                              
