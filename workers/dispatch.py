@@ -13,6 +13,8 @@ def WorkerFactory(name):
         return ingest_workers.ChannelObserverWorker()
     elif name == "video_gather":
         return ingest_workers.VideoGatherWorker()
+    elif name == "important_observe":
+        return ingest_workers.ImportantVideoObserverWorker()
     elif name == "search":
         return ingest_workers.SearchWorker()
     else:

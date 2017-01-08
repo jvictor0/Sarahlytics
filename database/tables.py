@@ -142,6 +142,15 @@ class VideosFacts(json_table.JSONTable):
                  "hours_since" : hours_since}
         return con.query(q)
 
+    def VideosBy(self, con, channel_ids):
+        q = """
+        select channel_id, video_id, max(published_at) published_at
+        from videos_facts
+        where channel_id in (%s)
+        group by channel_id, video_id
+        """
+        return con.query(q % ",".join(["'%s'" % c for c in channel_ids]))
+
                                              
 class Tables:
     def __init__(self):

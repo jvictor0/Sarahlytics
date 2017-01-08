@@ -17,6 +17,16 @@ class VideoObserverWorker(worker.Worker):
         self.tables.videos_facts.Insert(self.con, observations)
         self.Log("found %d to observe, observed %d videos" % (len(vid_rows), len(observations)))
 
+class ImportantVideoObserverWorker(worker.Worker):
+    def __init__(self, frequency=60*60*4):
+        super(ImportantVideoObserverWorker, self).__init__(frequency=frequency)
+
+    def DoWorkInternal(self):
+        vid_rows = self.tables.videos_facts.VideosBy(self.con, config.important_channels)
+        observations = fetch.ObserveVideos(vid_rows)
+        self.tables.videos_facts.Insert(self.con, observations)
+        self.Log("found %d to observe, observed %d videos" % (len(vid_rows), len(observations)))
+
 class VideoGatherWorker(worker.Worker):
     def __init__(self, frequency=60*5, max_daily_quota=300000):
         super(VideoGatherWorker, self).__init__(frequency=frequency)
