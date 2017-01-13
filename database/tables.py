@@ -10,8 +10,7 @@ class Channels:
         return """
         create table channels(
            channel_id blob primary key, 
-           channel_processed datetime default null, 
-           videos_processed datetime default null)
+           processed datetime default null)
         """
 
     def Create(self, con):
@@ -20,34 +19,23 @@ class Channels:
     def Insert(self, con, channel_ids):
         con.query("insert ignore into channels(channel_id) values" + ",".join(["('%s')" % cid for cid in channel_ids]))
 
-    def Process(self, con, channel_ids, channel, videos):
+    def Process(self, con, channel_ids):
         if len(channel_ids) == 0:
             return
         q = "update channels set "
         now = db_utils.Now(con)
-        if channel:
-            q += "channel_processed = '%s' " % now
-            if videos:
-                q += ", "
-        if videos:
-            q += "videos_processed = '%s' " % now
+        q += "processed = '%s' " % now
         q += "where channel_id in (%s)" % ",".join(["'%s'" % cid for cid in channel_ids])
         con.query(q)
 
-    def ChannelsToProcess(self, con, channel, videos, limit):
-        if channel and videos:
-            ob = "least(channel_processed, videos_processed)"
-        elif channel:
-            ob = "channel_processed"
-        elif videos:
-            ob = "videos_processed"
+    def ChannelsToProcess(self, con, limit):
         q = """
-        select channel_id, channel_processed, videos_processed
+        select channel_id, processed
         from channels
-        order by %s
+        order by processed
         limit %d
         """
-        q = q % (ob, limit)
+        q = q % (limit)
 
         return con.query(q)
 

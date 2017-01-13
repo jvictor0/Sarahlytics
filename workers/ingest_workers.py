@@ -27,9 +27,9 @@ class ImportantVideoObserverWorker(worker.Worker):
         self.tables.videos_facts.Insert(self.con, observations)
         self.Log("found %d to observe, observed %d videos" % (len(vid_rows), len(observations)))
 
-class VideoGatherWorker(worker.Worker):
+class ChannelObserverWorker(worker.Worker):
     def __init__(self, frequency=60*5, max_daily_quota=300000):
-        super(VideoGatherWorker, self).__init__(frequency=frequency)
+        super(ChannelObserverWorker, self).__init__(frequency=frequency)
         self.max_quota_per_work = max_daily_quota / (60 * 60 * 24 / frequency)
 
     def DoWorkInternal(self):
@@ -38,7 +38,7 @@ class VideoGatherWorker(worker.Worker):
         gathered_videos = 0
         gathered_from = 0
         while quota[0] < self.max_quota_per_work:
-            channels_rows = self.tables.channels.ChannelsToProcess(self.con, channel=False, videos=True, limit=50)
+            channels_rows = self.tables.channels.ChannelsToProcess(self.con, limit=50)
             if len(channels_rows) == 0:
                 break
             channels = [cr['channel_id'] for cr in channels_rows]
@@ -48,21 +48,9 @@ class VideoGatherWorker(worker.Worker):
             gathered_from += len(the_channels)
             gathered_videos += len(videos)
             self.tables.videos_facts.Insert(self.con, videos)
-            self.tables.channels.Process(self.con, the_channels, channel=False, videos=True)
+            self.tables.channels_facts.Insert(self.con, the_channels)
+            self.tables.channels.Process(self.con, [c["id"] for c in the_channels])
         self.Log("Gathering for %d channels, found %d new videos over %d channels" % (gathered_channels, gathered_videos, gathered_from))
-
-class ChannelObserverWorker(worker.Worker):
-    def __init__(self, frequency=60*15):
-        super(ChannelObserverWorker, self).__init__(frequency=frequency)
-
-    def DoWorkInternal(self):
-        channels_rows = self.tables.channels.ChannelsToProcess(self.con, channel=True, videos=False, limit=50)
-        channels = [cr['channel_id'] for cr in channels_rows]
-        observations = fetch.ObserveChannels(channels, content_details=False)
-        the_channels = list(set([c["id"] for c in observations]))
-        self.tables.channels_facts.Insert(self.con, observations)
-        self.tables.channels.Process(self.con, the_channels, channel=True, videos=False)
-        self.Log("found %d to observe, observed %d channels" % (len(channels_rows), len(the_channels)))
 
 class SearchWorker(worker.Worker):
     def __init__(self, frequency=60*60*3):

@@ -6,7 +6,6 @@ if __name__ == "__main__":
 
     workers.append(ingest_workers.SearchWorker())
     workers.append(ingest_workers.ChannelObserverWorker())
-    workers.append(ingest_workers.VideoGatherWorker())
     workers.append(ingest_workers.ImportantVideoObserverWorker())
     workers.append(ingest_workers.VideoObserverWorker())
     
