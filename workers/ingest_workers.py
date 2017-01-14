@@ -47,9 +47,10 @@ class ChannelObserverWorker(worker.Worker):
             the_channels, videos = fetch.FetchVideosForChannels(channels, max_pages_per_channel=10, quota=quota, stop_before=stop_before, max_quota=self.max_quota_per_work)
             gathered_from += len(the_channels)
             gathered_videos += len(videos)
+            channel_ids = [c["id"] for c in the_channels]
             self.tables.videos_facts.Insert(self.con, videos)
             self.tables.channels_facts.Insert(self.con, the_channels)
-            self.tables.channels.Process(self.con, [c["id"] for c in the_channels])
+            self.tables.channels.Process(self.con, channel_ids)
         self.Log("Gathering for %d channels, found %d new videos over %d channels" % (gathered_channels, gathered_videos, gathered_from))
 
 class SearchWorker(worker.Worker):

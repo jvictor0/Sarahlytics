@@ -75,7 +75,7 @@ def FetchVideosForChannels(channel_ids, stop_before={}, max_quota=None, quota=No
         if max_quota is not None:
             if quota[0] + api.VideosCost(len(previds), statistics=statistics, snippet=snippet) > max_quota:
                 break
-        the_channels.append(chan)
+        the_channels.append(NormalizeChannel(chan))
         for pv in api.PlaylistItems(max_pages=max_pages_per_channel, quota=quota, playlist_id=u, stop_before=stop_before.get(cid, None)):
             if cid not in stop_before or stop_before[cid] < db_utils.DateTime(pv["snippet"]["publishedAt"]):
                 previds[pv['snippet']['resourceId']['videoId']] = {"channel_id" : pv["snippet"]["channelId"],
