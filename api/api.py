@@ -4,6 +4,7 @@ import apiclient.errors
 from database import db_utils
 import time
 import traceback
+import sys
 
 # Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
 # tab of
@@ -25,11 +26,14 @@ def ApiRequestRetry(fn, num_retries=10, sleep_secs=30, **kwargs):
         try:
             return fn(**kwargs).execute()
         except apiclient.errors.HttpError as e:
-            traceback.print_exc()
+            traceback.print_exc(file=sys.stdout)
             if e.resp.status in [500, 503]:
                 time.sleep(sleep_secs)
             else:
                 raise
+        except Exception as e:
+            print "Exception class is", e.__class__.__name__
+            raise
     raise e
 
 def SearchInternal(quota=[0], q=None, snippet=True, max_results=50, channel_id=None, search_type="video", order="date", page_token=None, published_before=None, published_after=None):
