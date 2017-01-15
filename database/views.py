@@ -1,5 +1,6 @@
 import tables
 import db_utils
+import derivative
 
 def DropViews(con):
     while True:
@@ -20,6 +21,8 @@ def CreateViews(con):
     tabs = tables.Tables()
     CreateView(con, "videos_mr", tabs.videos_facts.MostRecent())
     CreateView(con, "channels_mr", tabs.channels_facts.MostRecent())
+    CreateView(con, "channels_dt", derivative.Derivative(tabs.channels_facts, inner_predicates=["f"]).Query())
+    CreateView(con, "videos_dt", derivative.Derivative(tabs.videos_facts, inner_predicates=["f"]).Query())
 
 
 if __name__ == "__main__":

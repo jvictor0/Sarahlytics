@@ -1,6 +1,7 @@
 import json_table
 import db_utils
 import temporal_band
+import joined
 
 class Channels:
     def __init__(self):
@@ -151,70 +152,5 @@ class Tables:
         self.channels_facts.Create(con)
         self.videos_facts.Create(con)
 
-    def Joined(self, channels_facts='base', videos_facts='base', videos_facts_tags='base', closest_temporal=True):
-        result = "select\n    "
-        cols = []
-        joins = []
-        if channels_facts is not None:
-            cols.append("channels_facts.ts as channels_facts_ts")
-            cols.append("channels_facts.f as channels_facts_f")
-            for c in self.channels_facts.columns:
-                if c.name not in ["f"]:
-                    cols.append("channels_facts.%s" % c.name)
-        if videos_facts is not None:
-            cols.append("videos_facts.ts as videos_facts_ts")
-            cols.append("videos_facts.f as videos_facts_f")
-            if channels_facts is not None:
-                joins.append("channels_facts.channel_id = videos_facts.channel_id")
-                if closest_temporal:
-                    cols.append("rank() over (partition by videos_facts.channel_id, videos_facts.video_id order by abs(timestampdiff(second, channels_facts.ts, videos_facts.ts))) as channel_video_time_rank")
-            for c in self.videos_facts.columns:
-                if channels_facts is not None and c.name in [cfc.name for cfc in self.channels_facts.columns]:
-                    continue
-                cols.append("videos_facts.%s" % c.name)
-        if videos_facts_tags is not None:
-            if closest_temporal:
-                cols.append("rank() over (partition by videos_facts.channel_id, videos_facts.video_id order by abs(timestampdiff(second, videos_facts_tags.ts, videos_facts.ts))) as video_tag_time_rank")
-            assert videos_facts is not None
-            joins.append("videos_facts_tags.channel_id = videos_facts.channel_id")
-            joins.append("videos_facts_tags.video_id = videos_facts.video_id")
-            cols.append("videos_facts_tags.ts as videos_facts_tags_ts")
-            cols.append("videos_facts_tags.tag")
-        result += ",\n    ".join(cols) + "\n"
-        result += "from "
-
-        tabs = []
-        
-        if channels_facts == "base":
-            tabs.append("channels_facts")        
-        elif channels_facts is not None:
-            tabs.append("(%s) channels_facts" % db_utils.Indent(channels_facts))
-
-        if videos_facts == "base":
-            tabs.append("videos_facts")
-        elif videos_facts is not None:
-            tabs.append("(%s) videos_facts" % db_utils.Indent(videos_facts))
-
-        if videos_facts_tags == "base":
-            tabs.append("videos_facts_tags")
-        elif videos_facts_tags is not None:
-            tabs.append("(%s) videos_facts_tags" % db_utils.Indent(videos_facts_tags))
-
-        result += "\njoin\n".join(tabs) + "\n"
-            
-        result += "on " + " and ".join(joins)
-
-        if closest_temporal:
-            preds = []
-            if channels_facts is not None:
-                preds.append("channel_video_time_rank = 1")
-            if videos_facts_tags is not None:
-                preds.append("video_tag_time_rank = 1")                
-            true_result = db_utils.Dedent("""
-            select * from
-            (%s) sub
-            where %s            
-            """)
-            return true_result % (db_utils.Indent(result), " and ".join(preds))
-        else:
-            return result
+    def Joined(self, **kwargs):
+        return joined.Joined(**kwargs).Query()

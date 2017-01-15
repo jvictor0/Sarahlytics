@@ -43,9 +43,10 @@ class ViewsOverSubsTags:
 
 if __name__ == "__main__":
     con = db_utils.Connect()
-    temp_band = temporal_band.TemporalBand(con=con,
-                                           earliest_ago=5*24*60*60,
-                                           latest_ago=4*24*60*60,
-                                           observed_at_secs=3*24*60*60)
+    temp_band = temporal_band.TemporalBand(
+        time_band=temporal_band.TimeBand(
+            temporal_band.Time(secs_ago=5*24*60*60),
+            temporal_band.Time(secs_ago=4*24*60*60)),
+        observed_at_secs=3*24*60*60)
     views_over_subs = ViewsOverSubsTags(temp_band=temp_band, min_subs=200)
     print simplejson.dumps(views_over_subs.Lasso(con), indent=4)

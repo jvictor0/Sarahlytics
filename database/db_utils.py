@@ -9,6 +9,9 @@ def Connect(use_db=True):
         con.query("use sarahlytics")
     return con
 
+def NowExpr():
+    return "convert_tz(now(), 'SYSTEM', 'GMT')"
+
 def Now(con):
     return con.query("select convert_tz(now(), 'SYSTEM', 'GMT') n")[0]["n"]
 
