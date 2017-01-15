@@ -55,7 +55,7 @@ def FetchVideos(previds, statistics=True, snippet=True):
     the_videos = set([r["id"] for r in result])
     for vid, pv in previds.iteritems():
         if vid not in the_videos:
-            result.append(EmptyVideo(pv["channel_id"], pv["video_id"], pv["published_at"]))
+            result.append(EmptyVideo(pv["channel_id"], vid, pv["published_at"]))
     assert len(result) == len(previds), (result, previds)
     return result
 
