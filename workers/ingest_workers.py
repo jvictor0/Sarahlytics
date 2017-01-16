@@ -7,15 +7,19 @@ from api import api
 import random
 
 class VideoObserverWorker(worker.Worker):
-    def __init__(self, frequency=60*5, max_daily_quota=100000):
+    def __init__(self, frequency=60*5, max_daily_quota=200000):
         super(VideoObserverWorker, self).__init__(frequency=frequency)
         self.max_quota_per_work = max_daily_quota / (60 * 60 * 24 / frequency)
 
     def DoWorkInternal(self):
-        vid_rows = self.tables.videos_facts.GetVideosToObserve(self.con, api.VideosForCost(self.max_quota_per_work))
+        vid_rows = self.tables.videos_facts.GetVideosToObserve(self.con, api.VideosForCost(self.max_quota_per_work / 2))
         observations = fetch.ObserveVideos(vid_rows)
-        self.tables.videos_facts.Insert(self.con, observations)
-        self.Log("found %d to observe, observed %d videos" % (len(vid_rows), len(observations)))
+        channels = list(set([vr["channel_id"] for vr in vid_rows]))
+        channel_observations = fetch.ObserveChannels(channels, content_details=False)
+        now = db_utils.Now(self.con)
+        self.tables.videos_facts.Insert(self.con, observations, now=now)
+        self.tables.channels_facts.Insert(self.con, channel_observations, now=now)
+        self.Log("found %d to observe, observed %d videos over %d channels" % (len(vid_rows), len(observations), len(channels)))
 
 class ImportantVideoObserverWorker(worker.Worker):
     def __init__(self, frequency=60*60*4):

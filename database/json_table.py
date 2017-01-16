@@ -80,7 +80,7 @@ class NormalizedArrayTable:
         result = "create table %s(\n" % (self.Name())
         for k in self.parent.kucc:
             if k == "ts":
-                result += "    ts datetime not null,\n"
+                result += "    ts datetime(6) not null,\n"
             else:
                 result += "    " + self.parent.GetColumn(k).ToSQL() + ",\n"
         result += "    " + self.name + " " + self.tp
@@ -147,7 +147,7 @@ class JSONTable(object):
         
     def ToSQL(self):
         result = "create table %s(\n" % (self.name)
-        result += "    ts datetime not null,\n"
+        result += "    ts datetime(6) not null,\n"
         result += "    json json not null,\n"
         for jc in self.columns:
             result += "    " + jc.ToSQL() + ",\n"
