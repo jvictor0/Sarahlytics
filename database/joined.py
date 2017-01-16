@@ -1,12 +1,12 @@
 import tables
 import db_utils
-
+import copy
 
 class Joined:
     def __init__(self,
                  channels_facts='base',
                  videos_facts='base',
-                 videos_facts_tags='base',
+                 videos_facts_tags='distinct',
                  closest_temporal='ts',
                  predicates=[],
                  filter_f=True):
@@ -15,15 +15,17 @@ class Joined:
         self.videos_facts = videos_facts
         self.videos_facts_tags = videos_facts_tags
         self.closest_temporal = closest_temporal
-        self.predicates = predicates
+        self.predicates = copy.copy(predicates)
         if filter_f:
             if self.channels_facts is not None:
-                self.predicates.append("channels_facts_f")
+                self.predicates.append("channels_facts.f")
             if self.videos_facts is not None:
-                self.predicates.append("videos_facts_f")
+                self.predicates.append("videos_facts.f")
 
     def DiffRank(self, secondary):
         parts = ["videos_facts.channel_id", "videos_facts.video_id"]
+        if self.videos_facts_tags is not None:
+            parts.append("videos_facts_tags.tag")
         return "row_number() over (partition by %s order by abs(timestampdiff(second, %s, videos_facts.%s)))" % (",".join(parts), secondary, self.closest_temporal)
         
     def Query(self):
@@ -48,12 +50,11 @@ class Joined:
                     continue
                 cols.append("videos_facts.%s" % c.name)
         if self.videos_facts_tags is not None:
-            if self.closest_temporal:
-                cols.append(self.DiffRank("videos_facts_tags.ts") + " as video_tag_time_rank")
             assert self.videos_facts is not None
             joins.append("videos_facts_tags.channel_id = videos_facts.channel_id")
             joins.append("videos_facts_tags.video_id = videos_facts.video_id")
-            cols.append("videos_facts_tags.ts as videos_facts_tags_ts")
+            if self.videos_facts_tags != "distinct":
+                cols.append("videos_facts_tags.ts as videos_facts_tags_ts")
             cols.append("videos_facts_tags.tag")
 
         result += ",\n    ".join(cols) + "\n"
@@ -69,8 +70,6 @@ class Joined:
             preds = []
             if self.channels_facts is not None:
                 preds.append("channel_video_time_rank = 1")
-            if self.videos_facts_tags is not None:
-                preds.append("video_tag_time_rank = 1")                
             true_result = db_utils.Dedent("""
             select * from
             (%s) sub
@@ -100,10 +99,12 @@ class Joined:
 
         if self.videos_facts_tags == "base":
             tabs.append("videos_facts_tags")
+        elif self.videos_facts_tags == "distinct":
+            tabs.append("(select distinct channel_id, video_id, tag from videos_facts_tags) videos_facts_tags")
         elif self.videos_facts_tags is not None:
             tabs.append("(%s) videos_facts_tags" % db_utils.Indent(self.videos_facts_tags))
 
-        return "\n" + "join\n".join(tabs) + "\n"
+        return "\n" + " join\n".join(tabs) + "\n"
 
     def Execute(self, con):
         return con.query(self.Query())
