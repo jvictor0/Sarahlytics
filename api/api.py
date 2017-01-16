@@ -24,7 +24,7 @@ def YouTube():
 def ApiRequestRetry(fn, num_retries=10, sleep_secs=30, **kwargs):
     for i in xrange(num_retries):
         try:
-            return fn(**kwargs).execute()
+            return fn(**kwargs).execute(num_retries=num_retries)
         except apiclient.errors.HttpError as e:
             traceback.print_exc(file=sys.stdout)
             if e.resp.status in [500, 503]:
