@@ -15,3 +15,4 @@ if __name__ == "__main__":
         for w in workers:
             if w.Ready():
                 w.DoWork()
+        time.sleep(10)
