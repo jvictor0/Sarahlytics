@@ -103,7 +103,7 @@ class VideosFacts(json_table.JSONTable):
         return q % where_clause
 
     def GetMostRecentChannelVideo(self, con, cids=None):
-        if len(cids) == 0:
+        if cids is not None and len(cids) == 0:
             return {}
         return {r["channel_id"] : db_utils.DateTime(r["most_recent_date"]) for r in con.query(self.MostRecentChannelVideo(cids=cids))}
 

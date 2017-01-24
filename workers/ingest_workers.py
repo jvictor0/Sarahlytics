@@ -44,13 +44,13 @@ class ChannelObserverWorker(worker.Worker):
         gathered_channels = 0
         gathered_videos = 0
         gathered_from = 0
+        stop_before = self.tables.videos_facts.GetMostRecentChannelVideo(self.con)
         while quota[0] < self.max_quota_per_work:
             channels_rows = self.tables.channels.ChannelsToProcess(self.con, limit=50)
             if len(channels_rows) == 0:
                 break
             channels = [cr['channel_id'] for cr in channels_rows]
-            gathered_channels += len(channels)
-            stop_before = self.tables.videos_facts.GetMostRecentChannelVideo(self.con, channels)
+            gathered_channels += len(channels)            
             the_channels, videos = fetch.FetchVideosForChannels(channels, max_pages_per_channel=10, quota=quota, stop_before=stop_before, max_quota=self.max_quota_per_work)
             gathered_from += len(the_channels)
             gathered_videos += len(videos)
