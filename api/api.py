@@ -5,6 +5,8 @@ from database import db_utils
 import time
 import traceback
 import sys
+import errno
+from socket import error as SocketError
 
 # Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
 # tab of
@@ -28,6 +30,12 @@ def ApiRequestRetry(fn, num_retries=10, sleep_secs=30, **kwargs):
         except apiclient.errors.HttpError as e:
             traceback.print_exc(file=sys.stdout)
             if e.resp.status in [500, 503]:
+                time.sleep(sleep_secs)
+            else:
+                raise
+        except SocketError as e:
+            traceback.print_exc(file=sys.stdout)
+            if e.errno in [errno.ECONNRESET]:
                 time.sleep(sleep_secs)
             else:
                 raise
@@ -101,7 +109,7 @@ def PlaylistItems(max_pages=1, stop_before=None, **kwargs):
         page_token = r.get("nextPageToken")
         if page_token is None:
             break
-        if stop_before is not None and db_utils.DateTime(results[-1]["snippet"]["publishedAt"]) < stop_before:
+        if len(results) > 0 and stop_before is not None and db_utils.DateTime(results[-1]["snippet"]["publishedAt"]) < stop_before:
             break
     return results
 
