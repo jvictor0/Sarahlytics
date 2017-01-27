@@ -22,7 +22,7 @@ class VideoObserverWorker(worker.Worker):
         self.Log("found %d to observe, observed %d videos over %d channels" % (len(vid_rows), len(observations), len(channels)))
 
 class ImportantVideoObserverWorker(worker.Worker):
-    def __init__(self, frequency=60*60*4):
+    def __init__(self, frequency=60*60):
         super(ImportantVideoObserverWorker, self).__init__(frequency=frequency)
 
     def DoWorkInternal(self):
