@@ -79,6 +79,19 @@ class VideosFacts(json_table.JSONTable):
 
         self.tags = json_table.NormalizedArrayTable("tag", "blob", True, self, ["snippet","tags"], ["channel_id","video_id","tag","ts"])
 
+    def Get(self, projections, videos=None, channels=None):
+        preds = ["f"]
+        if videos is not None:
+            preds.append("video_id in (%s)" % ",".join(["'%s'" % v for v in videos]))
+        if channels is not None:
+            preds.append("channel_id in (%s)" % ",".join(["'%s'" % v for v in channels]))
+        preds = " and ".join(preds)
+        result = "select\n    "
+        result += ",\n    ".join(["%s as %s" % (k,v) for k, v in projections.iteritems()])
+        result += "\nfrom videos_facts\nwhere " + preds
+        result += "\norder by ts"
+        return result
+
     def TemporalBand(self, **kwargs):
         return temporal_band.TemporalBand(video_name="videos_facts", **kwargs).Query()
         
