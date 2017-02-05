@@ -92,3 +92,21 @@ class Interpolator:
                     tp[k] = self.InterpolateGroup(i - 1, k, t)
             self.time_points.append(tp)
         return self.time_points
+
+    def Differentiate(self, min_time=1000*1000*60*60):
+        last = {}
+        result = []
+        for i in xrange(len(self.rows)):
+            g = self.RowGroup(i)
+            if g not in last:
+                last[g] = []
+            last[g].append((self.RowTime(i), self.RowResponse(i)))
+            dt = float(last[g][-1][0] - last[g][0][0])
+            if dt > min_time:
+                dr = float(last[g][-1][1] - last[g][0][1])
+                result.append({"d%s_d%s" % (self.response, self.time_col) : dr / dt,
+                               self.time_col : last[g][0][0] + dt / 2,
+                               self.group_by : g})
+                last[g] = [last[g][-1]]
+        result.sort(key=lambda r:r[self.time_col])
+        return result
