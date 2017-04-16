@@ -8,8 +8,7 @@ def GCTags(con):
               insert into videos_facts_tags(channel_id, video_id, tag, ts) 
               select channel_id, video_id, tag, min(ts) 
               from videos_facts_tags_bak
-              group by channel_id, video_id, tag 
-              order by channel_id, video_id, tag""")
+              group by channel_id, video_id, tag""")
     con.query("drop table videos_facts_tags_bak")
 
 if __name__ == "__main__":
