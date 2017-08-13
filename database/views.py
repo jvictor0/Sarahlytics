@@ -1,6 +1,7 @@
 import tables
 import db_utils
 import derivative
+from analytics import tags_dist
 
 def DropViews(con):
     while True:
@@ -23,6 +24,7 @@ def CreateViews(con):
     CreateView(con, "channels_mr", tabs.channels_facts.MostRecent())
     CreateView(con, "channels_dt", derivative.Derivative(tabs.channels_facts, inner_predicates=["f"]).Query())
     CreateView(con, "videos_dt", derivative.Derivative(tabs.videos_facts, inner_predicates=["f"]).Query())
+    CreateView(con, "channels_tags_similarity", tags_dist.ChannelsTagsDistance())
 
 
 if __name__ == "__main__":
