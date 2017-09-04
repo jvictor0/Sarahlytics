@@ -15,6 +15,9 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         if up.path == "/videos_graph":
             self.SendOkHeader()
             render_graph.VideoGraphRenderer(self, params).Render()
+        if up.path == "/sqlmlg":
+            self.SendOkHeader()
+            render_graph.SqlMultiLineGraphRenderer(self, params).Render()
         else:
             self.send_error(404, "wtf")
         
