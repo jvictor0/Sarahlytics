@@ -6,6 +6,7 @@ import os.path
 import render_graph
 import urlparse
 import api.config
+import config
 
 def SIN(dct, k, v):
     if k not in dct:
@@ -46,8 +47,8 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
     
     
 def Main():
-    port = 5321
-    server_address = ('127.0.0.1', port)
+    port = config.port
+    server_address = (config.host, port)
     
     httpd = BaseHTTPServer.HTTPServer(server_address, Handler)
     
