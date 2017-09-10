@@ -79,12 +79,16 @@ class VideosFacts(json_table.JSONTable):
 
         self.tags = json_table.NormalizedArrayTable("tag", "blob", True, self, ["snippet","tags"], ["channel_id","video_id","tag","ts"])
 
-    def Get(self, projections, videos=None, channels=None):
+    def Get(self, projections, videos=None, channels=None, min_time=None, max_time=None):
         preds = ["f"]
         if videos is not None:
             preds.append("video_id in (%s)" % ",".join(["'%s'" % v for v in videos]))
         if channels is not None:
             preds.append("channel_id in (%s)" % ",".join(["'%s'" % v for v in channels]))
+        if min_time is not None:
+            preds.append("ts >= %s" % min_time)
+        if max_time is not None:
+            preds.append("ts < %s" % max_time)        
         preds = " and ".join(preds)
         result = "select\n    "
         result += ",\n    ".join(["%s as %s" % (k,v) for k, v in projections.iteritems()])

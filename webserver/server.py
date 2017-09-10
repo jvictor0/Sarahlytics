@@ -5,19 +5,34 @@ import os
 import os.path
 import render_graph
 import urlparse
+import api.config
+
+def SIN(dct, k, v):
+    if k not in dct:
+        dct[k] = v
 
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         up = urlparse.urlparse(self.path)
         params = urlparse.parse_qs(up.query)
         params = {k: v[0] for k, v in params.iteritems()}
-        print params
         if up.path == "/videos_graph":
             self.SendOkHeader()
             render_graph.VideoGraphRenderer(self, params).Render()
-        if up.path == "/sqlmlg":
+        elif up.path == "/sqlmlg":
             self.SendOkHeader()
             render_graph.SqlMultiLineGraphRenderer(self, params).Render()
+        elif up.path == "/recent_top_videos":
+            self.SendOkHeader()
+            params["videos_query_file"] = "top_recent_videos.sql"
+            SIN(params, "limit", 7)
+            SIN(params, "channel_id", api.config.my_channel)
+            SIN(params, "hours", "168")
+            SIN(params, "per_hour", "1")
+            print params
+            if "min_time" not in params and "max_time" not in params:
+                SIN(params, "hours_ago", "336")
+            render_graph.VideoGraphRenderer(self, params).Render()
         else:
             self.send_error(404, "wtf")
         
@@ -31,7 +46,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
     
     
 def Main():
-    port = 8000
+    port = 5321
     server_address = ('127.0.0.1', port)
     
     httpd = BaseHTTPServer.HTTPServer(server_address, Handler)

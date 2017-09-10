@@ -57,7 +57,7 @@ class Interpolator:
 
     def InterpolateGroup(self, i, k, t):
         if self.group_cursors[k] == len(self.group_index[k]):
-            return self.RowResponse(self.group_index[self.group_cursors[k][-1]])
+            return self.RowResponse(self.group_index[k][self.group_cursors[k] - 1])
         else:
             assert self.group_cursors[k] < len(self.group_index[k]), (self.group_cursors[k], len(self.group_index[k]))
             cursor0 = self.group_index[k][self.group_cursors[k] - 1]
@@ -93,7 +93,7 @@ class Interpolator:
             self.time_points.append(tp)
         return self.time_points
 
-    def Differentiate(self, min_time=1000*1000*60*60):
+    def Differentiate(self, min_time=1000*1000*60*60*3, normalizer=1000*1000*60*60):
         last = {}
         result = []
         for i in xrange(len(self.rows)):
@@ -103,7 +103,7 @@ class Interpolator:
             last[g].append((self.RowTime(i), self.RowResponse(i)))
             dt = float(last[g][-1][0] - last[g][0][0])
             if dt > min_time:
-                dr = float(last[g][-1][1] - last[g][0][1])
+                dr = normalizer * float(last[g][-1][1] - last[g][0][1])
                 result.append({"d%s_d%s" % (self.response, self.time_col) : dr / dt,
                                self.time_col : last[g][0][0] + dt / 2,
                                self.group_by : g})
