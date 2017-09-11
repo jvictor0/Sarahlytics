@@ -97,3 +97,23 @@ def ObserveChannels(channels, statistics=True, snippet=True, content_details=Tru
             result.append(EmptyChannel(c))
     assert len(result) == len(channels)
     return result
+
+def ObserveChannelsWithLatestVideos(channels, statistics=True, snippet=True, content_details=True):
+    result = api.Channels(cids=channels, statistics=statistics, snippet=snippet, content_details=True)
+    uploads = {}
+    for c in result:
+        previds = api.PlaylistItems(playlist_id = c["contentDetails"]["relatedPlaylists"]["uploads"])
+        uploads[c["id"]] = [{"video_id" : pv["snippet"]["resourceId"]["videoId"],
+                            "channel_id" : pv["snippet"]["channelId"],
+                            "published_at" : pv["snippet"]["publishedAt"]}
+                            for pv in previds]
+    if not content_details:
+        for c in result:
+            del c["contentDetails"]
+    result = [NormalizeChannel(c) for c in result]
+    the_channels = set([r["id"] for r in result])
+    for c in channels:
+        if c not in the_channels:
+            result.append(EmptyChannel(c))
+    assert len(result) == len(channels)
+    return [(c, uploads.get(c["id"], [])) for c in result]

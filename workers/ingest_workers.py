@@ -27,11 +27,16 @@ class ImportantVideoObserverWorker(worker.Worker):
 
     def DoWorkInternal(self):
         vid_rows = self.tables.videos_facts.VideosBy(self.con, config.important_channels)
+        video_id_set = set([vr["video_id"] for vr in vid_rows])
+        channels_observations = fetch.ObserveChannelsWithLatestVideos(config.important_channels, content_details=False)
+        for c, uploads in channels_observations:
+            for u in uploads:
+                if u["video_id"] not in video_id_set:
+                    vid_rows.append(u)
         observations = fetch.ObserveVideos(vid_rows)
-        channels_observations = fetch.ObserveChannels(config.important_channels, content_details=False)
         now = db_utils.Now(self.con)
-        self.tables.videos_facts.Insert(self.con, observations)
-        self.tables.channels_facts.Insert(self.con, channels_observations, now=now)
+        self.tables.videos_facts.Insert(self.con, observations, now=now)
+        self.tables.channels_facts.Insert(self.con, [c for c,u in channels_observations], now=now)
         self.Log("found %d to observe, observed %d videos" % (len(vid_rows), len(observations)))
 
 class ChannelObserverWorker(worker.Worker):
