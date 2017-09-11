@@ -26,7 +26,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         elif up.path == "/recent_top_videos":
             self.SendOkHeader()
             params["videos_query_file"] = "top_recent_videos.sql"
-            SIN(params, "limit", 7)
+            SIN(params, "limit", 10)
             SIN(params, "channel_id", api.config.my_channel)
             SIN(params, "hours", "168")
             SIN(params, "per_hour", "1")
