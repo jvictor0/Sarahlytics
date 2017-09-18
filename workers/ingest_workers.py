@@ -26,7 +26,7 @@ class ImportantVideoObserverWorker(worker.Worker):
         super(ImportantVideoObserverWorker, self).__init__(frequency=frequency)
 
     def DoWorkInternal(self):
-        vid_rows = self.tables.videos_facts.VideosBy(self.con, config.important_channels)
+        vid_rows = list(self.tables.videos_facts.VideosBy(self.con, config.important_channels))
         video_id_set = set([vr["video_id"] for vr in vid_rows])
         channels_observations = fetch.ObserveChannelsWithLatestVideos(config.important_channels, content_details=False)
         for c, uploads in channels_observations:
