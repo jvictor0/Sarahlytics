@@ -108,5 +108,10 @@ class Interpolator:
                                self.time_col : last[g][0][0] + dt / 2,
                                self.group_by : g})
                 last[g] = [last[g][-1]]
+        for g, lst in last.iteritems():
+            dr = normalizer * float(lst[-1][1] - lst[0][1])
+            result.append({"d%s_d%s" % (self.response, self.time_col) : dr / dt,
+                           self.time_col : lst[0][0] + dt / 2,
+                           self.group_by : g})            
         result.sort(key=lambda r:r[self.time_col])
         return result

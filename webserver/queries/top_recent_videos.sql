@@ -1,7 +1,7 @@
 SELECT l.video_id
 FROM
 (
-    SELECT channel_id, video_id, max(view_count) as vc, max(ts) as ts
+    SELECT channel_id, video_id, max(view_count) as vc, max(ts) as ts, published_at
     from videos_facts
     where channel_id = '%(channel_id)s'
     group by channel_id, video_id
@@ -15,5 +15,5 @@ LEFT JOIN
     group by channel_id, video_id
 ) r
 ON l.channel_id = r.channel_id AND r.video_id = l.video_id
-ORDER BY if(r.vc is null, l.vc, (l.vc - r.vc) / timestampdiff(second, r.ts, l.ts)) desc
+ORDER BY if(r.vc is null, l.vc /  timestampdiff(second, l.published_at, l.ts), (l.vc - r.vc) / timestampdiff(second, r.ts, l.ts)) desc
 limit %(limit)s

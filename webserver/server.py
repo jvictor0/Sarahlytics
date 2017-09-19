@@ -7,6 +7,7 @@ import render_graph
 import urlparse
 import api.config
 import config
+import time
 
 def SIN(dct, k, v):
     if k not in dct:
@@ -17,6 +18,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         up = urlparse.urlparse(self.path)
         params = urlparse.parse_qs(up.query)
         params = {k: v[0] for k, v in params.iteritems()}
+        t0 = time.time()
         if up.path == "/videos_graph":
             self.SendOkHeader()
             render_graph.VideoGraphRenderer(self, params).Render()
@@ -30,13 +32,13 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             SIN(params, "channel_id", api.config.my_channel)
             SIN(params, "hours", "168")
             SIN(params, "per_hour", "1")
-            print params
+            SIN(params, "channels", params["channel_id"])
             if "min_time" not in params and "max_time" not in params:
                 SIN(params, "hours_ago", "336")
             render_graph.VideoGraphRenderer(self, params).Render()
         else:
             self.send_error(404, "wtf")
-        
+        print "took %f secs" % (time.time() - t0)
     protocol_version = "HTTP/1.0"
 
     def SendOkHeader(self):

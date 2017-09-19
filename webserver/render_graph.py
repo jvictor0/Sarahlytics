@@ -4,6 +4,7 @@ from analytics import time_series
 import simplejson
 import os.path
 import datetime
+import time
 
 def MicroTimestampToDatetime(ts):
     ts = ts / (1000 * 1000)
@@ -94,7 +95,6 @@ class VideoGraphRenderer:
             assert self.videos is None
             sql = GetSQL(params["videos_query_file"])
             self.videos = [r["video_id"] for r in self.con.query(sql % params)]
-            print self.videos
         self.tables = tables.Tables()
         self.rows = None
         self.interpolator = None
