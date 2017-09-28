@@ -21,12 +21,15 @@ class TimePoint:
 
     def Get(self, keys):
         return (self.time, [self[k] for k in keys])
+
+class DataPoint:
+    def __init__(self, g, x, y):
+        self.g = g
+        self.x = x
+        self.y = y
     
 class Interpolator:
-    def __init__(self, group_by, response, time_col='t'):
-        self.group_by = group_by
-        self.response = response
-        self.time_col = time_col
+    def __init__(self):
         self.group_index = {}
         self.group_cursors = {}
         self.time_points = []
@@ -40,13 +43,13 @@ class Interpolator:
         return groups, [tp.Get(groups) for tp in self.time_points]
          
     def RowTime(self, i):
-        return int(self.rows[i][self.time_col])
+        return self.rows[i].x
 
     def RowGroup(self, i):
-        return self.rows[i][self.group_by]
+        return self.rows[i].g
 
     def RowResponse(self, i):
-        return float(self.rows[i][self.response])
+        return self.rows[i].y
 
     def CreateGroupIndex(self):
         for i in xrange(len(self.rows)):
@@ -95,23 +98,23 @@ class Interpolator:
 
     def Differentiate(self, min_time=1000*1000*60*60*3, normalizer=1000*1000*60*60):
         last = {}
+        first = {}
         result = []
         for i in xrange(len(self.rows)):
             g = self.RowGroup(i)
-            if g not in last:
-                last[g] = []
-            last[g].append((self.RowTime(i), self.RowResponse(i)))
-            dt = float(last[g][-1][0] - last[g][0][0])
+            this = (self.RowTime(i), self.RowResponse(i))
+            last[g] = this
+            if g not in first:
+                first[g] = this
+            dt = float(this[0] - first[g][0])
             if dt > min_time:
-                dr = normalizer * float(last[g][-1][1] - last[g][0][1])
-                result.append({"d%s_d%s" % (self.response, self.time_col) : dr / dt,
-                               self.time_col : last[g][0][0] + dt / 2,
-                               self.group_by : g})
-                last[g] = [last[g][-1]]
+                dr = normalizer * float(this[1] - first[g][1])
+                result.append(DataPoint(g, first[g][0] + dt / 2, dr / dt))
+                first[g] = this
         for g, lst in last.iteritems():
-            dr = normalizer * float(lst[-1][1] - lst[0][1])
-            result.append({"d%s_d%s" % (self.response, self.time_col) : dr / dt,
-                           self.time_col : lst[0][0] + dt / 2,
-                           self.group_by : g})            
-        result.sort(key=lambda r:r[self.time_col])
+            if first[g][1] != lst[1]:
+                dt = float(this[0] - first[g][0])                            
+                dr = normalizer * float(lst[1] - first[g][1])
+                result.append(DataPoint(g, first[g][0] + dt / 2, dr / dt))
+        result.sort(key=lambda r:r.x)
         return result
