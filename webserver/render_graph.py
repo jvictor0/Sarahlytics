@@ -180,10 +180,8 @@ class VideoGraphRenderer:
 
     def Render(self):
         pre_groups, matrix = self.GetMatrix()
-        titles_order = self.con.query("select video_id, video_title from videos_facts where channel_id in (%s) and video_id in (%s) group by channel_id, video_id order by published_at"
-                                    % (",".join(["'%s'" % k for k in self.channels]), ",".join(["'%s'" % k for k in self.videos])))
-        indices = [pre_groups.index(r["video_id"]) for r in titles_order if r["video_id"] in pre_groups]
-        groups = [r["video_title"] for r in titles_order if r["video_id"] in pre_groups]
+        indices = [pre_groups.index(r["video_id"]) for r in self.titles_order if r["video_id"] in pre_groups]
+        groups = [r["video_title"] for r in self.titles_order if r["video_id"] in pre_groups]
         matrix = [(MicroTimestampToDatetime(ts), [m[ix] for ix in indices]) for ts,m in matrix]
         gr = ChartJsGraphRenderer(self.http_handler, groups, matrix, stacked=self.stacked)
         gr.Render()
@@ -193,20 +191,36 @@ class VideoGraphRenderer:
             "video_id" : "video_id",
             "unix_timestamp(convert_tz(ts, 'gmt', 'system')) * 1000000" : "t",
             "view_count" : "view_count"}
+        published_in_dataset = []
+        if self.min_time is not None:
+            published_in_dataset.append("published_at >= %s" % self.min_time)
+        if self.max_time is not None:
+            published_in_dataset.append("published_at < %s" % self.max_time)
+        if len(published_in_dataset) == 0:
+            published_in_dataset.append("1")
+        info_projects = {
+            "video_id" : "video_id",
+            "video_title" : "video_title",
+            "unix_timestamp(convert_tz(published_at, 'gmt', 'system')) * 1000000" : "t",
+            " and ".join(published_in_dataset) : "published_in_dataset"}
         if self.rows is None:
             self.rows = self.con.query(self.tables.videos_facts.Get(projects, channels=self.channels, videos=self.videos, min_time=self.min_time, max_time=self.max_time))
+            self.titles_order = self.con.query(self.tables.videos_facts.GetInfo(info_projects, channels=self.channels, videos=self.videos))
+            self.titles_order = sorted(self.titles_order, key=lambda r:int(r["t"]))
         indices = [self.rows.fieldnames.index("video_id"), self.rows.fieldnames.index("t"), self.rows.fieldnames.index("view_count")]
-        return [time_series.DataPoint(r[indices[0]], int(r[indices[1]]), float(r[indices[2]])) for r in self.rows.values]
+        real_data_points = [time_series.DataPoint(r[indices[0]], int(r[indices[1]]), float(r[indices[2]])) for r in self.rows.values]
+        other_data_points = [time_series.DataPoint(r["video_id"], int(r["t"]), 0.0) for r in self.titles_order if int(r["published_in_dataset"]) == 1]
+        data_points = sorted(real_data_points + other_data_points, key=lambda r: r.x)
+        return data_points
 
     def GetMatrix(self):
         rows = self.GetVideosRows()
         if self.interpolator is None:
             self.interpolator = time_series.Interpolator()
-            self.interpolator.Interpolate(rows)
             if self.per_hour:
-                diff  = self.interpolator.Differentiate(min_time=1000*1000*60*60*self.bin_hours)
-                self.interpolator = time_series.Interpolator()
-                self.interpolator.Interpolate(diff)
+                self.interpolator.Differentiate(rows, min_time=1000 * 1000 * 60 * 60 * self.bin_hours)
+            else:
+                self.interpolator.Interpolate(rows)
         return self.interpolator.GroupMatrix()
 
     

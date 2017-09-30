@@ -96,19 +96,24 @@ class Interpolator:
             self.time_points.append(tp)
         return self.time_points
 
-    def Differentiate(self, min_time=1000*1000*60*60*3, normalizer=1000*1000*60*60):
+    def Differentiate(self, rows, min_time=1000*1000*60*60*3, normalizer=1000*1000*60*60):
         last = {}
         first = {}
+        very_first = {}
         result = []
-        for i in xrange(len(self.rows)):
-            g = self.RowGroup(i)
-            this = (self.RowTime(i), self.RowResponse(i))
+        for r in rows:
+            g = r.g
+            this = (r.x, r.y)
             last[g] = this
             if g not in first:
+                assert g not in very_first
+                very_first[g] = this
                 first[g] = this
             dt = float(this[0] - first[g][0])
             if dt > min_time:
                 dr = normalizer * float(this[1] - first[g][1])
+                if first[g][0] == very_first[g][0]:
+                    result.append(DataPoint(g, first[g][0], dr / dt))
                 result.append(DataPoint(g, first[g][0] + dt / 2, dr / dt))
                 first[g] = this
         for g, lst in last.iteritems():
@@ -117,4 +122,4 @@ class Interpolator:
                 dr = normalizer * float(lst[1] - first[g][1])
                 result.append(DataPoint(g, first[g][0] + dt / 2, dr / dt))
         result.sort(key=lambda r:r.x)
-        return result
+        return self.Interpolate(result)
