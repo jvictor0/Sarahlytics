@@ -31,7 +31,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             SIN(params, "limit", 30)
             SIN(params, "channel_id", api.config.my_channel)
             SIN(params, "hours", str(60 * 24))
-            SIN(params, "bin_hours", str(int(params["hours"]) / 30))
+            SIN(params, "bin_hours", str(int(params["hours"]) / 60))
             SIN(params, "per_hour", "1")
             SIN(params, "stacked", "1")
             SIN(params, "channels", params["channel_id"])
