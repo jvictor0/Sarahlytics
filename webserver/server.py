@@ -28,7 +28,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         elif up.path == "/recent_top_videos":
             self.SendOkHeader()
             params["videos_query_file"] = "top_recent_videos.sql"
-            SIN(params, "limit", 20)
+            SIN(params, "limit", 30)
             SIN(params, "channel_id", api.config.my_channel)
             SIN(params, "hours", str(30 * 24))
             SIN(params, "bin_hours", str(int(params["hours"]) / 30))
@@ -36,7 +36,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             SIN(params, "stacked", "1")
             SIN(params, "channels", params["channel_id"])
             if "min_time" not in params and "max_time" not in params:
-                SIN(params, "hours_ago", str(int(params["hours"]) * 2))
+                SIN(params, "hours_ago", str(int(params["hours"])))
             render_graph.VideoGraphRenderer(self, params).Render()
         else:
             self.send_error(404, "wtf")
