@@ -117,9 +117,14 @@ class Interpolator:
                 result.append(DataPoint(g, first[g][0] + dt / 2, dr / dt))
                 first[g] = this
         for g, lst in last.iteritems():
-            if first[g][1] != lst[1]:
-                dt = float(this[0] - first[g][0])                            
-                dr = normalizer * float(lst[1] - first[g][1])
-                result.append(DataPoint(g, first[g][0] + dt / 2, dr / dt))
+            if first[g][1] != lst[1]:                
+                for end_first_ix in xrange(len(rows) - 1, 1, -1):
+                    if rows[end_first_ix].g == g:                        
+                        end_first = rows[end_first_ix]
+                        if lst[0] - end_first.x > min_time:
+                            break
+                dt = float(lst[0] - end_first.x)                            
+                dr = normalizer * float(lst[1] - end_first.y)
+                result.append(DataPoint(g, lst[0], dr / dt))
         result.sort(key=lambda r:r.x)
         return self.Interpolate(result)

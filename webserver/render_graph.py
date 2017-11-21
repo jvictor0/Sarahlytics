@@ -64,8 +64,19 @@ class ChartJsGraphRenderer:
 
     def OptionsJSON(self):
         return {
+            "responsive": True,
+	    "tooltips": {
+		"mode": "nearest",
+                "intersect": False
+	    },
+	    "hover": {
+		"mode": 'index'
+	    },
             "title": {
                 "text": "woohoo"
+            },
+            "legend": {
+                "display": False
             },
             "scales": {
                 "xAxes": [{
@@ -112,7 +123,7 @@ class ChartJsGraphRenderer:
 	self.wfile.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>\n')
 	self.wfile.write('<script src="http://www.chartjs.org/dist/2.7.0/Chart.js"></script>\n')
 	self.wfile.write('<script src="http://www.chartjs.org/samples/latest/utils.js"></script>\n')
-        self.wfile.write('<body><div style="width:75%;"><canvas id="canvas"></canvas></div><script>\n')
+        self.wfile.write('<body><div style="height:95%;"><canvas id="canvas"></canvas></div><script>\n')
         self.RenderScript()
         self.wfile.write('</script></body>')
 
